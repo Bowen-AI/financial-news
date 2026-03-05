@@ -1,0 +1,154 @@
+services:
+  # ── PostgreSQL + pgvector ────────────────────────────────────────────────
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: fnews-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fnews
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: fnews
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fnews"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: fnews-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redisdata:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ── Ollama (LLM server) ──────────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: fnews-ollama
+    restart: unless-stopped
+    volumes:
+      - ollamadata:/root/.ollama
+    ports:
+      - "127.0.0.1:11434:11434"
+    # Uncomment for GPU support:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # ── Database migration (runs once) ──────────────────────────────────────
+  migrate:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    container_name: fnews-migrate
+    command: ["alembic", "upgrade", "head"]
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://fnews:${POSTGRES_PASSWORD:-changeme}@db:5432/fnews
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # ── FastAPI ──────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    container_name: fnews-api
+    restart: unless-stopped
+    command: ["uvicorn", "apps.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://fnews:${POSTGRES_PASSWORD:-changeme}@db:5432/fnews
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/0
+      LLM_BASE_URL: http://ollama:11434
+      SOURCE_CONFIG_PATH: /app/config/sources.yaml
+      WATCHLIST_CONFIG_PATH: /app/config/watchlist.yaml
+      BLOB_STORE_PATH: /data/blobs
+    volumes:
+      - blobdata:/data/blobs
+      - ../config:/app/config:ro
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ── Celery worker ────────────────────────────────────────────────────────
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    container_name: fnews-worker
+    restart: unless-stopped
+    command: ["celery", "-A", "apps.worker.celery_app", "worker", "--loglevel=info", "--concurrency=2"]
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://fnews:${POSTGRES_PASSWORD:-changeme}@db:5432/fnews
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/0
+      LLM_BASE_URL: http://ollama:11434
+      SOURCE_CONFIG_PATH: /app/config/sources.yaml
+      WATCHLIST_CONFIG_PATH: /app/config/watchlist.yaml
+      BLOB_STORE_PATH: /data/blobs
+    volumes:
+      - blobdata:/data/blobs
+      - ../config:/app/config:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  # ── Celery beat (scheduler) ──────────────────────────────────────────────
+  beat:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    container_name: fnews-beat
+    restart: unless-stopped
+    command: ["celery", "-A", "apps.worker.celery_app", "beat", "--loglevel=info"]
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://fnews:${POSTGRES_PASSWORD:-changeme}@db:5432/fnews
+      REDIS_URL: redis://:${REDIS_PASSWORD:-}@redis:6379/0
+      LLM_BASE_URL: http://ollama:11434
+      SOURCE_CONFIG_PATH: /app/config/sources.yaml
+      WATCHLIST_CONFIG_PATH: /app/config/watchlist.yaml
+    depends_on:
+      - redis
+      - worker
+
+volumes:
+  pgdata:
+  redisdata:
+  ollamadata:
+  blobdata:

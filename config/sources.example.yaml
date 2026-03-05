@@ -1,0 +1,44 @@
+sources:
+  # RSS feeds – free and publicly available
+  - name: Reuters Business
+    type: rss
+    url: https://feeds.reuters.com/reuters/businessNews
+    credibility: 0.9
+    enabled: true
+
+  - name: Reuters Money
+    type: rss
+    url: https://feeds.reuters.com/news/wealth
+    credibility: 0.9
+    enabled: true
+
+  - name: AP Business
+    type: rss
+    url: https://rsshub.app/apnews/topics/business
+    credibility: 0.85
+    enabled: true
+
+  - name: MarketWatch Top Stories
+    type: rss
+    url: https://feeds.content.dowjones.io/public/rss/mw_topstories
+    credibility: 0.8
+    enabled: true
+
+  - name: Financial Times (free)
+    type: rss
+    url: https://www.ft.com/rss/home
+    credibility: 0.9
+    enabled: false  # may require subscription; enable if access available
+
+  - name: Seeking Alpha Markets
+    type: rss
+    url: https://seekingalpha.com/market_currents.xml
+    credibility: 0.65
+    enabled: false  # community content; lower credibility
+
+  # Direct HTTP pages (use sparingly; respect robots.txt)
+  - name: Federal Reserve Press Releases
+    type: http
+    url: https://www.federalreserve.gov/feeds/press_all.xml
+    credibility: 1.0
+    enabled: true
