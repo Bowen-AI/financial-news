@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
 
 from packages.rag.evidence_guard import AnalystResponse
 

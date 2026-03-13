@@ -37,13 +37,11 @@ class TestIngestionDedup:
     """Test that the ingestion pipeline correctly deduplicates articles."""
 
     async def test_new_article_is_stored(self, db_session, blob_dir):
-        from packages.core.models import Article
         from packages.ingestion.pipeline import run_ingestion
         from packages.ingestion.sources import SourceConfig
 
-        # Patch load_sources to return a single mock HTTP source
         fake_result = MagicMock()
-        fake_result.url = "https://example.com/article-1"
+        fake_result.url = "https://example.com/article-integ-1"
         fake_result.html = b"<html>test</html>"
         fake_result.text = "Apple Inc reported record quarterly earnings today."
         fake_result.title = "Apple Reports Record Earnings"
@@ -69,7 +67,7 @@ class TestIngestionDedup:
         from packages.ingestion.sources import SourceConfig
 
         fake_result = MagicMock()
-        fake_result.url = "https://example.com/article-dedup"
+        fake_result.url = "https://example.com/article-dedup-integ"
         fake_result.html = b""
         fake_result.text = "Some unique news content for dedup test."
         fake_result.title = "Dedup Test Article"
@@ -85,9 +83,7 @@ class TestIngestionDedup:
             ]
             mock_fetch.return_value = [fake_result]
 
-            # First ingest
             result1 = await run_ingestion(db_session, "config/sources.example.yaml", blob_dir)
-            # Second ingest with same article
             result2 = await run_ingestion(db_session, "config/sources.example.yaml", blob_dir)
 
         assert result1["new_articles"] == 1
@@ -98,7 +94,7 @@ class TestIngestionDedup:
         from packages.ingestion.sources import SourceConfig
 
         fake_result = MagicMock()
-        fake_result.url = "https://example.com/empty-article"
+        fake_result.url = "https://example.com/empty-article-integ"
         fake_result.html = b""
         fake_result.text = "   "  # whitespace only
         fake_result.title = "Empty"
@@ -116,7 +112,6 @@ class TestIngestionDedup:
 
             result = await run_ingestion(db_session, "config/sources.example.yaml", blob_dir)
 
-        # Empty-text articles should be skipped
         assert result["new_articles"] == 0
 
 
@@ -141,7 +136,6 @@ class TestBlobStoreIntegration:
         data = b"unique content"
         digest = store.put(data)
 
-        # Verify the directory structure
         path = tmp_path / "blobs" / digest[:2] / digest[2:4] / digest
         assert path.exists()
 
@@ -193,12 +187,10 @@ class TestPortfolioLedgerIntegration:
         )
 
         positions = await get_positions(db_session)
-        # Zero-quantity positions should not appear
         assert "GLD" not in positions
 
-    async def test_format_positions_no_positions(self, db_session):
+    async def test_format_positions_returns_string(self, db_session):
         from packages.portfolio.ledger import format_positions
 
         summary = await format_positions(db_session)
-        # A fresh session should show no positions (or existing from other tests)
         assert isinstance(summary, str)

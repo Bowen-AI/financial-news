@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from packages.core.logging import get_logger
 from packages.rag.llm_client import LLMClient

@@ -1,7 +1,6 @@
 """Unit tests for text chunker."""
 from __future__ import annotations
 
-import pytest
 
 from packages.rag.chunker import chunk_text
 

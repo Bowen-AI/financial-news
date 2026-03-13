@@ -1,7 +1,6 @@
 """Unit tests for content deduplication utilities."""
 from __future__ import annotations
 
-import pytest
 
 from packages.ingestion.dedup import canonical_url, content_hash, excerpt_hash
 

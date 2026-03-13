@@ -7,8 +7,6 @@ from typing import Optional
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
-    BigInteger,
-    Boolean,
     Column,
     DateTime,
     Float,

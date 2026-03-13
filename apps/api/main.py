@@ -4,16 +4,16 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Request, Security, status
+from fastapi import Depends, FastAPI, HTTPException, Security, status
 from fastapi.responses import HTMLResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
-from sqlalchemy import func, select, text
+from sqlalchemy import func, select
 
 from packages.core import get_settings
-from packages.core.db import AsyncSessionLocal, get_db
+from packages.core.db import AsyncSessionLocal
 from packages.core.logging import configure_logging, get_logger
-from packages.core.models import Alert, AuditLog, Briefing, TradeAction
+from packages.core.models import Alert, Briefing, TradeAction
 
 configure_logging()
 logger = get_logger(__name__)
@@ -52,7 +52,6 @@ async def health():
 @app.get("/status", tags=["system"], dependencies=[Depends(_verify_key)])
 async def status_endpoint():
     """System status: last run times, queue depth, model backend."""
-    from packages.core.db import engine
 
     async with AsyncSessionLocal() as db:
         last_ingest = await db.execute(
@@ -177,7 +176,6 @@ class InboundEmailPayload(BaseModel):
 @app.post("/email/inbound", tags=["email"], dependencies=[Depends(_verify_key)])
 async def inbound_email(payload: InboundEmailPayload):
     """Process an inbound email (webhook alternative to IMAP)."""
-    from apps.worker.tasks import imap_poll_task
 
     # For webhook mode: directly process in-band (simplified)
     logger.info("inbound_email_webhook", sender=payload.sender, subject=payload.subject)

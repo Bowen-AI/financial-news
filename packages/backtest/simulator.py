@@ -6,9 +6,7 @@ For MVP: accepts CSV price data or fetches from Yahoo Finance (optional).
 from __future__ import annotations
 
 import csv
-import io
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 from typing import Optional
 
 from sqlalchemy import select

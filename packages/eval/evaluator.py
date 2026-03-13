@@ -2,13 +2,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from packages.core.logging import get_logger
-from packages.core.models import Alert, BacktestResult, Briefing, Chunk, EvalRecord
+from packages.core.models import Alert, BacktestResult, Briefing, EvalRecord
 
 logger = get_logger(__name__)
 
@@ -71,10 +70,9 @@ async def run_evaluation(
     # Higher-credibility sources that produce high-scoring alerts get boosted
     # (simplified: log sources with > avg impact score)
     source_weights: dict[str, float] = {}
-    avg_score_result = await db.execute(
+    await db.execute(
         select(func.avg(Alert.impact_score)).where(Alert.created_at >= since)
     )
-    avg_score = float(avg_score_result.scalar() or 50)
 
     if alert_precision is not None:
         if alert_precision < 0.3:

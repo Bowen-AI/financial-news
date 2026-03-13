@@ -2,12 +2,11 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from packages.alerts.scorer import ScoredArticle, score_article
+from packages.alerts.scorer import score_article
 from packages.core.logging import get_logger
 from packages.core.models import Alert, AlertSource, Article
 from packages.ingestion.sources import WatchlistConfig

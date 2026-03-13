@@ -1,9 +1,8 @@
 """Unit tests for trade action email parser."""
 from __future__ import annotations
 
-import pytest
 
-from packages.portfolio.parser import ParsedAction, parse_action
+from packages.portfolio.parser import parse_action
 
 
 class TestParseAction:

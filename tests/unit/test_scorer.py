@@ -1,7 +1,6 @@
 """Unit tests for alert event scoring."""
 from __future__ import annotations
 
-import pytest
 from unittest.mock import MagicMock
 
 from packages.alerts.scorer import score_article

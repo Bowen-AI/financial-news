@@ -8,7 +8,6 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from packages.core.logging import get_logger
-from packages.core.models import Article, Chunk
 from packages.rag.embedder import EmbeddingModel
 
 logger = get_logger(__name__)
