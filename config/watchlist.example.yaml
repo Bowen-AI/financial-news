@@ -1,0 +1,29 @@
+watchlist:
+  # Ticker symbols to track (uppercase)
+  tickers:
+    - AAPL
+    - MSFT
+    - NVDA
+    - TSLA
+    - AMZN
+    - GOOGL
+    - META
+    - BRK.B
+    - SPY
+    - QQQ
+    - GLD
+    - BTC-USD
+
+  # Named entities / organizations to track
+  entities:
+    - "Federal Reserve"
+    - "Fed"
+    - "FOMC"
+    - "Jerome Powell"
+    - "Treasury"
+    - "SEC"
+    - "OPEC"
+    - "European Central Bank"
+    - "ECB"
+    - "Bank of Japan"
+    - "IMF"
